@@ -166,25 +166,26 @@
             // 
             // textBox1
             // 
-            this.textBox1.Font = new System.Drawing.Font("宋体", 10F);
-            this.textBox1.Location = new System.Drawing.Point(1197, 23);
+            this.textBox1.Location = new System.Drawing.Point(1197, 25);
             this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(150, 46);
+            this.textBox1.Size = new System.Drawing.Size(150, 42);
             this.textBox1.TabIndex = 38;
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(983, 28);
+            this.label1.Location = new System.Drawing.Point(1014, 28);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(193, 30);
+            this.label1.Size = new System.Drawing.Size(178, 30);
             this.label1.TabIndex = 39;
-            this.label1.Text = "请输入名字：";
+            this.label1.Text = "请输入名字:";
             // 
             // FaceForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(15F, 30F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoScroll = true;
+            this.AutoSize = true;
             this.ClientSize = new System.Drawing.Size(2318, 1570);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.textBox1);
@@ -201,11 +202,10 @@
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(8, 8, 8, 8);
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
+            this.MinimumSize = new System.Drawing.Size(2350, 1658);
             this.Name = "FaceForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "ArcSoftFace C# demo";
+            this.Text = "人脸识别系统";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form_Closed);
             ((System.ComponentModel.ISupportInitialize)(this.picImageCompare)).EndInit();
             this.ResumeLayout(false);
