@@ -35,6 +35,7 @@ namespace ArcSoftFace
         VideoCaptureDevice videoSource;
         public int selectedDeviceIndex = 0;
         #endregion
+        private List<People> peoples;
         const string connetStr = "server=127.0.0.1;port=3306;user=root;password=1234; database=people;";
         MySqlConnection conn = new MySqlConnection(connetStr);
         public FaceForm()
@@ -55,14 +56,66 @@ namespace ArcSoftFace
             videoSourcePlayer1.Start();
         }
         private void InitDB()
-        { string allselect = "selsect * from face";
+        {
+            string allselect = "selsect * from face";
             conn.Open();
             MySqlCommand cmd = new MySqlCommand(allselect, conn);
             MySqlDataReader read = cmd.ExecuteReader();
+            if (read.FieldCount == 0)
+            {
+                return;
+            }
             while (read.Read())
             {
+                int i = 0;
                 string _name = read.GetString("name");
                 string path = read.GetString("face");
+                Image srcImage = Image.FromFile(path);
+                if (srcImage == null)
+                {
+                    return;
+                }
+                srcImage = ImageUtil.ScaleImage(srcImage, picImageCompare.Width, picImageCompare.Height);
+                ImageInfo imageInfo = ImageUtil.ReadBMP(srcImage);
+                ASF_SingleFaceInfo singleFaceInfo = new ASF_SingleFaceInfo();
+                //提取人脸特征
+                IntPtr ptr = FaceUtil.ExtractFeature(pEngine, srcImage, out singleFaceInfo);
+
+                if (ptr == IntPtr.Zero)
+                {
+                    continue;
+                }
+                imagePathList.Add(path);
+                imagesFeatureList.Add(ptr);
+                KeyValuePair<string, IntPtr> pair = new KeyValuePair<string, IntPtr>(path, ptr);
+                People people = new People(_name, pair);
+                peoples.Add(people);
+                //人脸检测与剪裁
+                ThreadPool.QueueUserWorkItem(new WaitCallback(delegate
+                {
+                    ASF_MultiFaceInfo multiFaceInfo = FaceUtil.DetectFace(pEngine, srcImage);
+
+                    if (multiFaceInfo.faceNum > 0)
+                    {
+                        imagePathList.Add(path);
+                        MRECT rect = MemoryUtil.PtrToStructure<MRECT>(multiFaceInfo.faceRects);
+                        srcImage = ImageUtil.CutImage(srcImage, rect.left, rect.top, rect.right, rect.bottom);
+                    }
+
+
+                    this.Invoke(new Action(delegate
+                    {
+                        if (srcImage == null)
+                        {
+                            srcImage = Image.FromFile(path);
+                        }
+                        imageLists.Images.Add(path, srcImage);
+                        imageList.Items.Add(i + "号", path);
+                        i++;
+                        srcImage = null;
+                    }));
+                }));
+
             }
         }
 
@@ -142,7 +195,7 @@ namespace ArcSoftFace
             retCode = ASFFunctions.ASFInitEngine(detectMode, detectFaceOrientPriority, detectFaceScaleVal, detectFaceMaxNum, combinedMask, ref pEngine);
             Console.WriteLine("InitEngine Result:" + retCode);
             AppendText((retCode == 0) ? "引擎初始化成功!\n" : string.Format("引擎初始化失败!错误码为:{0}\n", retCode));
-            if(retCode != 0)
+            if (retCode != 0)
             {
                 chooseMultiImgBtn.Enabled = false;
                 matchBtn.Enabled = false;
@@ -197,15 +250,15 @@ namespace ArcSoftFace
                 ASF_MultiFaceInfo multiFaceInfo = FaceUtil.DetectFace(pEngine, imageInfo);
                 //年龄检测
                 int retCode_Age = -1;
-                ASF_AgeInfo ageInfo = FaceUtil.AgeEstimation(pEngine, imageInfo, multiFaceInfo,out retCode_Age);
+                ASF_AgeInfo ageInfo = FaceUtil.AgeEstimation(pEngine, imageInfo, multiFaceInfo, out retCode_Age);
                 //性别检测
                 int retCode_Gender = -1;
                 ASF_GenderInfo genderInfo = FaceUtil.GenderEstimation(pEngine, imageInfo, multiFaceInfo, out retCode_Gender);
-               
+
                 //3DAngle检测
                 int retCode_3DAngle = -1;
                 ASF_Face3DAngle face3DAngleInfo = FaceUtil.Face3DAngleDetection(pEngine, imageInfo, multiFaceInfo, out retCode_3DAngle);
-               
+
                 MemoryUtil.Free(imageInfo.imgData);
 
                 if (multiFaceInfo.faceNum < 1)
@@ -349,14 +402,15 @@ namespace ArcSoftFace
                         //人脸检测和剪裁
                         for (int i = 0; i < imagePathListTemp.Count; i++)
                         {
-                            Image image = Image.FromFile(imagePathListTemp[i]);
-                            ASF_MultiFaceInfo multiFaceInfo = FaceUtil.DetectFace(pEngine, image);
+                            Image srcImage = Image.FromFile(imagePathListTemp[i]);
+                            ASF_MultiFaceInfo multiFaceInfo = FaceUtil.DetectFace(pEngine, srcImage);
 
                             if (multiFaceInfo.faceNum > 0)
                             {
                                 imagePathList.Add(imagePathListTemp[i]);
+
                                 MRECT rect = MemoryUtil.PtrToStructure<MRECT>(multiFaceInfo.faceRects);
-                                image = ImageUtil.CutImage(image, rect.left, rect.top, rect.right, rect.bottom);
+                                srcImage = ImageUtil.CutImage(srcImage, rect.left, rect.top, rect.right, rect.bottom);
                             }
                             else
                             {
@@ -365,14 +419,14 @@ namespace ArcSoftFace
 
                             this.Invoke(new Action(delegate
                             {
-                                if (image == null)
+                                if (srcImage == null)
                                 {
-                                    image = Image.FromFile(imagePathListTemp[i]);
+                                    srcImage = Image.FromFile(imagePathListTemp[i]);
                                 }
-                                imageLists.Images.Add(imagePathListTemp[i], image);
+                                imageLists.Images.Add(imagePathListTemp[i], srcImage);
                                 imageList.Items.Add((numStart + isGoodImage) + "号", imagePathListTemp[i]);
                                 isGoodImage += 1;
-                                image = null;
+                                srcImage = null;
                             }));
                         }
 
@@ -382,6 +436,7 @@ namespace ArcSoftFace
                         {
                             ASF_SingleFaceInfo singleFaceInfo = new ASF_SingleFaceInfo();
                             IntPtr feature = FaceUtil.ExtractFeature(pEngine, Image.FromFile(imagePathList[i]), out singleFaceInfo);
+
                             this.Invoke(new Action(delegate
                             {
                                 if (singleFaceInfo.faceRect.left == 0 && singleFaceInfo.faceRect.right == 0)
@@ -392,6 +447,18 @@ namespace ArcSoftFace
                                 {
                                     AppendText(string.Format("已提取{0}号人脸特征值，[left:{1},right:{2},top:{3},bottom:{4},orient:{5}]\r\n", i, singleFaceInfo.faceRect.left, singleFaceInfo.faceRect.right, singleFaceInfo.faceRect.top, singleFaceInfo.faceRect.bottom, singleFaceInfo.faceOrient));
                                     imagesFeatureList.Add(feature);
+                                    KeyValuePair<string, IntPtr> pair = new KeyValuePair<string, IntPtr>(imagePathList[i], feature);
+                                    string _name = string.Format("{0}号", i);
+                                    if (textBox1.Text != null)
+                                    {
+                                        _name = textBox1.Text;
+                                        textBox1.Text = null;
+                                    }
+                                    People people = new People(_name, pair);
+                                    peoples.Add(people);
+                                    string sqlstr = string.Format("insert into face(name,face) values('{0}','{1}')",_name,imagePathList[i]);
+                                    MySqlCommand cmd = new MySqlCommand(sqlstr, conn);
+                                    int resule = cmd.ExecuteNonQuery();
                                 }
                             }));
                         }
@@ -458,19 +525,25 @@ namespace ArcSoftFace
             float compareSimilarity = 0f;
             int compareNum = 0;
             AppendText(string.Format("------------------------------开始比对，时间:{0}------------------------------\r\n", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:ms")));
-            for (int i = 0; i < imagesFeatureList.Count; i++)
+            for (int i = 0; i < peoples.Count; i++)
             {
-                IntPtr feature = imagesFeatureList[i];
-                float similarity = 0f;
-                long t1 = DateTime.Now.ToFileTime();
-                int ret = ASFFunctions.ASFFaceFeatureCompare(pEngine, image1Feature, feature, ref similarity);
-                long t2 = DateTime.Now.ToFileTime();
-                AppendText(string.Format("与{0}号比对结果:{1}\r\n", i, similarity));
-                imageList.Items[i].Text = string.Format("{0}号({1})", i, similarity);
-                if (similarity > compareSimilarity)
+                foreach (KeyValuePair<string, IntPtr> ptr in peoples[i].images)
                 {
-                    compareSimilarity = similarity;
-                    compareNum = i;
+
+                    IntPtr feature = ptr.Value;
+                    //imagesFeatureList[i];
+                    float similarity = 0f;
+                    long t1 = DateTime.Now.ToFileTime();
+                    int ret = ASFFunctions.ASFFaceFeatureCompare(pEngine, image1Feature, feature, ref similarity);
+                    long t2 = DateTime.Now.ToFileTime();
+                    AppendText(string.Format("与{0}比对结果:{1}\r\n", peoples[i].name, similarity));
+                    imageList.Items[i].Text = string.Format("{0}号({1})", i, similarity);
+                    if (similarity > compareSimilarity)
+                    {
+                        compareSimilarity = similarity;
+                        compareNum = i;
+                        MessageBox.Show("欢迎你。{0}", peoples[i].name);
+                    }
                 }
             }
             if (compareSimilarity > 0)

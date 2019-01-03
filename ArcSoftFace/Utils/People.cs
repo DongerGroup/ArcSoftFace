@@ -9,7 +9,7 @@ namespace ArcSoftFace.Utils
     public class People
     {
         public string name;
-        public Dictionary<string, IntPtr> images;
+        public Dictionary<string, IntPtr>  images;
         public People()
         {
             name = null;
@@ -19,11 +19,11 @@ namespace ArcSoftFace.Utils
         {
             name = _name;
             images = null;
-          //  images.Add(keyValuePair);
+            images.Add(keyValuePair.Key,keyValuePair.Value);
         }
         public void Add(KeyValuePair<string, IntPtr> keyValuePair)
         {
-            //images.Add(keyValuePair);
+            images.Add(keyValuePair.Key,keyValuePair.Value);
         }
     }
 }
