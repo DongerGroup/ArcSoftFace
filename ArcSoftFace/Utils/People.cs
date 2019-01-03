@@ -19,11 +19,11 @@ namespace ArcSoftFace.Utils
         {
             name = _name;
             images = null;
-            images.Add(keyValuePair);
+          //  images.Add(keyValuePair);
         }
         public void Add(KeyValuePair<string, IntPtr> keyValuePair)
         {
-            images.Add(keyValuePair);
+            //images.Add(keyValuePair);
         }
     }
 }
