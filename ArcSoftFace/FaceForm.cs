@@ -11,6 +11,7 @@ using System.Configuration;
 using System.Threading;
 using AForge.Video.DirectShow;
 using AForge.Video;
+using MySql.Data.MySqlClient;
 namespace ArcSoftFace
 {
     public partial class FaceForm : Form
@@ -29,11 +30,40 @@ namespace ArcSoftFace
 
         //左侧图库人脸特征列表
         private List<IntPtr> imagesFeatureList = new List<IntPtr>();
-
+        #region 摄像头相关全局变量
+        FilterInfoCollection videoDevices;
+        VideoCaptureDevice videoSource;
+        public int selectedDeviceIndex = 0;
+        #endregion
+        const string connetStr = "server=127.0.0.1;port=3306;user=root;password=1234; database=people;";
+        MySqlConnection conn = new MySqlConnection(connetStr);
         public FaceForm()
         {
             InitializeComponent();
             InitEngines();
+            InitCamera();
+        }
+        //初始化摄像头
+        private void InitCamera()
+        {
+            videoDevices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
+            selectedDeviceIndex = 0;
+            videoSource = new VideoCaptureDevice(videoDevices[selectedDeviceIndex].MonikerString);
+            videoSource.VideoResolution = videoSource.VideoCapabilities[selectedDeviceIndex];
+            videoSourcePlayer1.VideoSource = videoSource;
+
+            videoSourcePlayer1.Start();
+        }
+        private void InitDB()
+        { string allselect = "selsect * from face";
+            conn.Open();
+            MySqlCommand cmd = new MySqlCommand(allselect, conn);
+            MySqlDataReader read = cmd.ExecuteReader();
+            while (read.Read())
+            {
+                string _name = read.GetString("name");
+                string path = read.GetString("face");
+            }
         }
 
         /// <summary>
@@ -462,6 +492,11 @@ namespace ArcSoftFace
             imageList.Items.Clear();
             imagesFeatureList.Clear();
             imagePathList.Clear();
+        }
+
+        private void videoSourcePlayer1_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

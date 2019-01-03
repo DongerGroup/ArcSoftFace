@@ -43,6 +43,7 @@
             this.lblCompareInfo = new System.Windows.Forms.Label();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
+            this.videoSourcePlayer1 = new AForge.Controls.VideoSourcePlayer();
             ((System.ComponentModel.ISupportInitialize)(this.picImageCompare)).BeginInit();
             this.SuspendLayout();
             // 
@@ -180,6 +181,16 @@
             this.label1.TabIndex = 39;
             this.label1.Text = "请输入名字:";
             // 
+            // videoSourcePlayer1
+            // 
+            this.videoSourcePlayer1.Location = new System.Drawing.Point(1507, 288);
+            this.videoSourcePlayer1.Name = "videoSourcePlayer1";
+            this.videoSourcePlayer1.Size = new System.Drawing.Size(760, 570);
+            this.videoSourcePlayer1.TabIndex = 40;
+            this.videoSourcePlayer1.Text = "videoSourcePlayer1";
+            this.videoSourcePlayer1.VideoSource = null;
+            this.videoSourcePlayer1.Click += new System.EventHandler(this.videoSourcePlayer1_Click);
+            // 
             // FaceForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(15F, 30F);
@@ -187,6 +198,7 @@
             this.AutoScroll = true;
             this.AutoSize = true;
             this.ClientSize = new System.Drawing.Size(2318, 1570);
+            this.Controls.Add(this.videoSourcePlayer1);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.lblCompareInfo);
@@ -228,6 +240,7 @@
         private System.Windows.Forms.Label lblCompareInfo;
         private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.Label label1;
+        private AForge.Controls.VideoSourcePlayer videoSourcePlayer1;
     }
 }
 
