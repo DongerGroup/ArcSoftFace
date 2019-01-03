@@ -9,7 +9,8 @@ using ArcSoftFace.Entity;
 using System.IO;
 using System.Configuration;
 using System.Threading;
-
+using AForge.Video.DirectShow;
+using AForge.Video;
 namespace ArcSoftFace
 {
     public partial class FaceForm : Form
